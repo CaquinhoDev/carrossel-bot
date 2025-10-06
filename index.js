@@ -13,9 +13,10 @@ const makeWASocket = require("baileys").default;
 const pino = require("pino");
 const NodeCache = require("node-cache");
 const axios = require("axios");
-const qrcode = require("qrcode-terminal");
+const path = require("path");
+const fs = require("fs");
+const qrcode = require("qrcode");
 
-const pairingCode = false;
 const msgRetryCounterCache = new NodeCache();
 
 async function getBuffer(url) {
@@ -40,9 +41,10 @@ async function connectToWhatsApp() {
     const { connection, lastDisconnect, qr } = update;
 
     if (qr) {
-      // exibe no terminal em forma de QR visual
-      qrcode.generate(qr, { small: true });
-      console.log("QR code gerado acima. Escaneie com WhatsApp.");
+      console.log(
+        "QR Code Recebido! Escaneie com o WhatsApp no qrcode na pasta 'QRCODE'"
+      );
+      generateQRCode(qr);
     }
 
     if (connection === "close") {
@@ -55,6 +57,16 @@ async function connectToWhatsApp() {
       }
     } else if (connection === "open") {
       console.log("🤖 BOT ONLINE!");
+    }
+
+    function generateQRCode(qr) {
+      const qrImagePath = path.join(__dirname, "QRCODE", "qr-code.png");
+      const qrDir = path.dirname(qrImagePath);
+      if (!fs.existsSync(qrDir)) fs.mkdirSync(qrDir, { recursive: true });
+
+      qrcode.toFile(qrImagePath, qr, { type: "png" }, (err) => {
+        if (err) console.error("Erro ao gerar o QR code: ", err);
+      });
     }
   });
 
